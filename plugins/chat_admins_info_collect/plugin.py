@@ -1,5 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from datetime import datetime, timezone
+
 from zuki.plugin import Plugin
 
 from plugins.telegram_info_collect.factories.chat import ChatServiceFactory
@@ -27,7 +29,7 @@ class ChatAdminInfoCollectPlugin(Plugin):
             self.job,
             "interval",
             max_instances=1,
-            seconds=10
+            minutes=10
         )
 
         scheduler.start()
@@ -49,5 +51,6 @@ class ChatAdminInfoCollectPlugin(Plugin):
             chat_id=int(self.chat_ids[self.iteration]),
             uow_fabric=self.uow
         )
+        print(f"{datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}"
+              f"Chat admins sync job done for chat_id={self.chat_ids[self.iteration]}")
         self.iteration += 1
-        print(f"Chat admins sync job done for chat_id={self.chat_ids[self.iteration-1]}")
