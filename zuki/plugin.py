@@ -16,10 +16,10 @@ class Plugin:
 
 
     async def on_load(self):
-        print(f"Module {self.name} is being loaded")
+        pass
 
     async def on_startup(self):
-        print(f"Module {self.name} has started")
+        pass
 
     async def on_shutdown(self):
-        print(f"Module: {self.name} is shutting down")
+        pass

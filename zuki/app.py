@@ -12,7 +12,7 @@ class App:
         *,
         bot_token: str,
         bot_storage: Optional[BaseStorage],
-    ):  
+    ):
         self.bot = Bot(token=bot_token)
         if bot_storage is None:
             self.dp = Dispatcher(storage=bot_storage)
@@ -21,7 +21,7 @@ class App:
 
         self._services = {}
         self.plugins = {}
-        
+
         self.add_dispatcher_middleware(OuterMiddleware(self))
 
     def register_service(self, name, service):

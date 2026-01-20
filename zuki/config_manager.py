@@ -33,7 +33,7 @@ class ConfigManager:
 
     def get_plugin_config_path(self, plugin_name: str) -> Path:
         return self.configs_root / plugin_name
-    
+
     def _get_plugin_default_config_dir(self, plugin: Plugin) -> Path | None:
         if plugin.default_config_dir is None:
             return None
@@ -49,7 +49,7 @@ class ConfigManager:
             )
 
         return default_dir
-    
+
     def _merge_default_configs(self, default_dir: Path, target_dir: Path):
         for item in default_dir.iterdir():
             target_item = target_dir / item.name

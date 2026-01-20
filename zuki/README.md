@@ -6,19 +6,19 @@
 ---
 
 ## Features
-- Plugin lifecycle management (`load`, `startup`, `shutdown`). Lifecycle methods are optional — if not defined, nothing happens.  
-- Configuration handling: the core provides paths to config files, regardless of format (TOML, JSON, YAML, etc.).  
-- Plugin dependencies and default configs: missing files can be copied from a plugin’s internal defaults to the external configs directory.  
-- Service registration: plugins can register and retrieve services through the application.  
+- Plugin lifecycle management (`load`, `startup`, `shutdown`). Lifecycle methods are optional — if not defined, nothing happens.
+- Configuration handling: the core provides paths to config files, regardless of format (TOML, JSON, YAML, etc.).
+- Plugin dependencies and default configs: missing files can be copied from a plugin’s internal defaults to the external configs directory.
+- Service registration: plugins can register and retrieve services through the application.
 - Integration with **aiogram**: routers and middleware can be attached via the app.
 
 ---
 
 ## Components
-- **`app.py`** — `App` object, controls startup and provides API for plugins.  
-- **`plugin.py`** — base `Plugin` class, all plugins inherit from it.  
-- **`config_manager.py`** — configuration manager, copies defaults and provides config paths.  
-- **`plugin_manager.py`** — handles plugin registration and lifecycle.  
+- **`app.py`** — `App` object, controls startup and provides API for plugins.
+- **`plugin.py`** — base `Plugin` class, all plugins inherit from it.
+- **`config_manager.py`** — configuration manager, copies defaults and provides config paths.
+- **`plugin_manager.py`** — handles plugin registration and lifecycle.
 - **`middleware.py`** — auxiliary layer required for integration, but not relevant for plugin developers.
 
 ---
@@ -36,9 +36,9 @@ class ExamplePlugin(Plugin):
 ```
 
 ### Attributes
-- `name` — plugin name.  
-- `requires` — list of dependencies (other plugin names).  
-- `default_config_dir` — path to default configs inside the plugin package.  
+- `name` — plugin name.
+- `requires` — list of dependencies (other plugin names).
+- `default_config_dir` — path to default configs inside the plugin package.
 
 Config manager usage:
 ```py

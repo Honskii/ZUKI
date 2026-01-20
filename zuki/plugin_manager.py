@@ -21,15 +21,14 @@ class PluginManager:
     def register(self, plugin_cls: Plugin):
         if not issubclass(plugin_cls, Plugin):
             raise ValueError(f"Argument 'plugin_cls' must be Plugin type, not {type(plugin_cls)}")
-        
+
         if not plugin_cls.name:
             raise ValueError("Plugin must have name")
-        
+
         if self.plugins.get(plugin_cls.name) is not None:
             raise ValueError("Plugin with this name has already been registered")
 
         self.plugins[plugin_cls.name] = plugin_cls
-    
 
     def register_all_from_package(self, package_name: str):
         package = importlib.import_module(package_name)
@@ -42,7 +41,8 @@ class PluginManager:
 
             try:
                 module = importlib.import_module(plugin_module_name)
-            except ModuleNotFoundError:
+            except ModuleNotFoundError as e:
+                print(f"Failed to import {plugin_module_name}: {e}")
                 continue
 
             for obj in module.__dict__.values():
@@ -81,14 +81,20 @@ class PluginManager:
 
     async def load_all(self):
         order = self.resolve_order()
+        print(f"Plugin found:", ', '.join(order))
 
         for name in order:
             plugin_cls = self.plugins[name]
             instance = plugin_cls(self.app, self.config_manager)
-            # self.config_manager.ensure_plugin_configs(instance)
             self.app.plugins[name] = instance
+            print(f"Loading plugin: {name}")
             await instance.on_load()
+            print(f"Plugin loaded: {name}")
+        print("All plugins loaded")
 
     async def startup_all(self):
         for plugin in self.app.plugins.values():
+            print(f"Starting plugin: {plugin.name}")
             await plugin.on_startup()
+            print(f"Plugin started: {plugin.name}")
+        print("All plugins started")

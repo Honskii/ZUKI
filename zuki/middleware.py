@@ -6,7 +6,7 @@ from aiogram import BaseMiddleware
 class OuterMiddleware(BaseMiddleware):
     def __init__(self, app):
         self.app = app
-    
+
     async def __call__(
         self,
         handler: Callable[[Any, dict], Awaitable[Any]],
