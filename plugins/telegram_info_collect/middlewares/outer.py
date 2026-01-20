@@ -21,7 +21,7 @@ class OuterMiddleware(BaseMiddleware):
 
         if isinstance(event.event, Message):
             message: Message = event.event
-            
+
             user = None
             chat = None
 
@@ -56,7 +56,7 @@ class OuterMiddleware(BaseMiddleware):
                         user_tg_id=message.from_user.id,
                         chat_tg_id=message.chat.id,
                         status=tg_chat_member.status,
-                        title=tg_chat_member.custom_title,
+                        title=getattr(tg_chat_member, "custom_title", "admin"),
                         role_id=1
                     )
 

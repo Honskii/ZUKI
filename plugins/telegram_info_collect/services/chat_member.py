@@ -3,7 +3,7 @@ from typing import Optional, List
 from ..models.chat_member import ChatMember, ChatMemberRole, ChatMemberPermission
 from ..models.enums import ChatMemberStatusEnum
 from ..repositories.chat_member import (
-    ChatMemberRepository, ChatMemberRoleRepository, 
+    ChatMemberRepository, ChatMemberRoleRepository,
     ChatMemberPermissionRepository
 )
 from ..services.user import UserService

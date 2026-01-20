@@ -25,5 +25,5 @@ class ChatMemberStatusEnum(enum.Enum):
     PEDNING = "pending"
     MEMBER = "member"
     ADMINISTRATOR = "administrator"
-    OWNER = "owner"
+    CREATOR = "creator"
 
