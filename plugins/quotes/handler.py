@@ -10,7 +10,7 @@ from plugins.telegram_adapters.adapters.user_avatar import fetch_last_avatar
 
 @router.message(F.text == ".цитата", F.chat.type.in_({"group", "supergroup"}))
 async def quote_handler(message: Message, quote_service: QuoteService):
-    if (datetime.now(tz=message.date.tzinfo) - message.date).days > 1:
+    if (datetime.now(tz=message.date.tzinfo) - message.date).seconds > 30:
         return
     if message.reply_to_message is None or message.reply_to_message.text is None:
         return

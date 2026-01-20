@@ -1,7 +1,7 @@
 from typing import Callable, Awaitable, Dict, Any
 
 from aiogram import BaseMiddleware
-from aiogram.types import Message
+from aiogram.types import Message, ChatMemberRestricted
 
 from .service import QuoteService
 
