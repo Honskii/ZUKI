@@ -15,7 +15,6 @@ class DBManager(Plugin):
     config = {}
 
     async def on_load(self):
-        print("Database manager loading")
         self.config_manager.ensure_plugin_configs(self)
         self.config_path = self.config_manager.get_plugin_config_path(self.name)
         self.config = await self.load_config("config.toml")
@@ -31,7 +30,6 @@ class DBManager(Plugin):
         )
 
         self.app.register_service(f"{self.name}:engine", self.engine)
-        self.app.register_service(f"{self.name}:sessionmaker", self.sessionmaker)
         self.app.register_service(f"{self.name}:base", Base)
         self.app.register_service(
             f"{self.name}:uow_factory",
@@ -43,7 +41,6 @@ class DBManager(Plugin):
         )
     
     async def on_startup(self):
-        print("Database manager startup")
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     
