@@ -35,7 +35,7 @@ class QuoteService:
         self.backgrounds = self.load_backgrounds(backgrounds)
         self.timezone = timezone
         self.strftime = strftime
-        
+
         self.avatar_size = 200
         self.max_text_length = 225
         self.rate_limit = 2
@@ -43,12 +43,12 @@ class QuoteService:
         self.text_area_width = 375
         self.font_size_text = 24
         self.font_size_metadata = 18
-        
+
     def load_backgrounds(self, bg_path_list: List[Path]) -> list[Image.Image]:
         """Загружает все доступные фоны из заданной директории в оперативную память"""
         if not bg_path_list:
             raise ValueError("No background paths provided to load.")
-        
+
         loaded_images = []
         for bg_path in bg_path_list:
             try:
@@ -89,7 +89,7 @@ class QuoteService:
     ) -> io.BytesIO:
         """Генерирует изображение с цитатой"""
         draw = ImageDraw.Draw(bg_image)
-        
+
         # 2. Шрифты
         try:
             font_text = ImageFont.truetype(self.src_path / "fonts" / self.quote_font_family, self.font_size_text)
@@ -112,15 +112,15 @@ class QuoteService:
         # 4. Отрисовка имени (под аватаркой)
         # Разбиение имени на несколько строк, но пока не используется
         wrapped_name = textwrap.fill(username, width=1500)
-        
+
         # Расчёт высоту блока имени
         bbox_name = draw.multiline_textbbox((0, 0), wrapped_name, font=font_metadata)
         name_height = bbox_name[3] - bbox_name[1]
-        
+
         name_y = avatar_y + self.avatar_size + self.margin / 3 # 10px отступ от аватарки
         draw.multiline_text((avatar_x, name_y), f"© {wrapped_name}", font=font_metadata, fill="white", align="center")
-        
-        
+
+
         now = message_datetime
         now = now.astimezone(ZoneInfo(self.timezone))
         date_text = f"@ {now.strftime(self.strftime)}"

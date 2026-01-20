@@ -10,14 +10,13 @@ class QuotesPlugin(Plugin):
     name = "quotes"
     requires = ["telegram_adapters"]
     default_config_dir = "default_configs"
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config_path = None
         self.config = {}
 
     async def on_load(self):
-        print("Quotes collect plugin loading")
         self.config_manager.ensure_plugin_configs(self)
         self.config_path = self.config_manager.get_plugin_config_path(self.name)
         self.config = await self.load_config("config.toml")
@@ -33,7 +32,7 @@ class QuotesPlugin(Plugin):
     async def load_config(self, conf_file_path: str):
         with open(self.config_path / conf_file_path, "rb") as file:
             return tomllib.load(file)
-    
+
     async def quote_service_kwargs_from_config(self):
         src_path = self.config_path / "src"
 
@@ -60,7 +59,7 @@ class QuotesPlugin(Plugin):
 
         for filter in allowed_backgrounds:
             backgrounds = backgrounds.union(set((src_path / "backgrounds").glob(filter)))
-        
+
         for filter in ignored_backgrounds:
             backgrounds = {bg for bg in backgrounds if not bg.match(filter)}
 

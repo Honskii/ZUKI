@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 from aiogram import F
 from aiogram.types import Message, BufferedInputFile
@@ -9,9 +10,11 @@ from plugins.telegram_adapters.adapters.user_avatar import fetch_last_avatar
 
 @router.message(F.text == ".цитата", F.chat.type.in_({"group", "supergroup"}))
 async def quote_handler(message: Message, quote_service: QuoteService):
+    if (datetime.now(tz=message.date.tzinfo) - message.date).days > 1:
+        return
     if message.reply_to_message is None or message.reply_to_message.text is None:
         return
-    
+
     original_msg = message.reply_to_message
     user = original_msg.from_user
     text = original_msg.text
@@ -26,7 +29,7 @@ async def quote_handler(message: Message, quote_service: QuoteService):
         # Запуск тяжелой задачу в отдельном потоке, чтобы не блокировать бота
         loop = asyncio.get_running_loop()
         image_data = await loop.run_in_executor(
-            None, 
+            None,
             quote_service.create_quote_image,
             bg_image, avatar_bytes, full_name, text, date
         )
