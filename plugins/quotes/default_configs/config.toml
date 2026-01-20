@@ -1,0 +1,21 @@
+[backgrounds]
+allowed = [
+    ".png",
+    ".jpg"
+]
+ignored = []
+limit = 100
+# Is a random background taken from the list
+# true - random; false - cyclically in order
+randomized = true
+
+[font]
+quote_font_family = "Par-Defaut-Lonie-Soft-Bold.otf"
+quote_font_size = 24
+metadata_font_family = "FiraMono-Medium.ttf"
+metadata_font_size = 18
+
+[datetime]
+# Name from IANA Time zone Database
+timezone = "Etc/UTC"
+strftime = "%d.%m.%Y"
