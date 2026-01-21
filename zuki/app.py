@@ -2,6 +2,7 @@ from typing import Optional
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.base import BaseStorage
+from zoneinfo import ZoneInfo
 
 from .middleware import OuterMiddleware
 
@@ -12,6 +13,7 @@ class App:
         *,
         bot_token: str,
         bot_storage: Optional[BaseStorage],
+        timezone: str = "Etc/UTC"
     ):
         self.bot = Bot(token=bot_token)
         if bot_storage is None:
@@ -21,6 +23,8 @@ class App:
 
         self._services = {}
         self.plugins = {}
+
+        self.timezone = ZoneInfo(timezone)
 
         self.add_dispatcher_middleware(OuterMiddleware(self))
 
