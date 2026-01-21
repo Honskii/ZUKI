@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import importlib
 import pkgutil
 
@@ -15,8 +15,9 @@ class PluginManager:
         config_manager=Optional[ConfigManager]
     ):
         self.app: App = app
-        self.plugins: Dict[Plugin] = {}
         self.config_manager = config_manager
+        self.plugins: Dict[Plugin] = {}
+        self.order: List[str] = []
 
     def register(self, plugin_cls: Plugin):
         if not issubclass(plugin_cls, Plugin):
@@ -26,7 +27,7 @@ class PluginManager:
             raise ValueError("Plugin must have name")
 
         if self.plugins.get(plugin_cls.name) is not None:
-            raise ValueError("Plugin with this name has already been registered")
+            raise ValueError(f"Plugin with this name {plugin_cls.name} has already been registered")
 
         self.plugins[plugin_cls.name] = plugin_cls
 
@@ -53,11 +54,11 @@ class PluginManager:
                 ):
                     self.register(obj)
 
-    def resolve_order(self):
+    async def resolve_order(self):
         resolved = []
         unresolved = []
 
-        def resolve(name):
+        async def resolve(name):
             if name in resolved:
                 return
             if name in unresolved:
@@ -69,32 +70,41 @@ class PluginManager:
             for dep in plugin.requires:
                 if dep not in self.plugins:
                     raise RuntimeError(f"Missing dependency: {dep}")
-                resolve(dep)
+                await resolve(dep)
 
             unresolved.remove(name)
             resolved.append(name)
 
         for name in self.plugins:
-            resolve(name)
+            await resolve(name)
 
-        return resolved
+        self.order = resolved
 
     async def load_all(self):
-        order = self.resolve_order()
-        print(f"Plugin found:", ', '.join(order))
+        print(f"Plugin found:", ', '.join(self.order))
+        print("Loading plugins...")
 
-        for name in order:
+        for name in self.order:
             plugin_cls = self.plugins[name]
             instance = plugin_cls(self.app, self.config_manager)
             self.app.plugins[name] = instance
-            print(f"Loading plugin: {name}")
-            await instance.on_load()
-            print(f"Plugin loaded: {name}")
+            try:
+                await instance.on_load()
+                print(f"Plugin loaded: {instance} ({name})")
+            except Exception as e:
+                print(f"Failed to load plugin {instance} ({name}): {e}")
+                raise e
         print("All plugins loaded")
 
     async def startup_all(self):
-        for plugin in self.app.plugins.values():
-            print(f"Starting plugin: {plugin.name}")
-            await plugin.on_startup()
-            print(f"Plugin started: {plugin.name}")
+        print("Starting plugins...")
+        
+        for name in self.order:
+            plugin = self.app.plugins[name]
+            try:
+                await plugin.on_startup()
+                print(f"Plugin started: {plugin} ({name})")
+            except Exception as e:
+                print(f"Failed to start plugin {plugin} ({name}): {e}")
+                raise e
         print("All plugins started")

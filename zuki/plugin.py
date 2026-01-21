@@ -6,14 +6,19 @@ if TYPE_CHECKING:
 
 
 class Plugin:
-    name = None
+    name: str = ""
     requires = []
-    default_config_dir = f"config/{name}"
+    default_config_dir = f"default_configs"
+    title = name
+
+    def __init_subclass__(cls, *args, **kwargs):
+        super().__init_subclass__(*args, **kwargs)
+        if not cls.name:
+            cls.name = cls.__name__.lower()
 
     def __init__(self, app: "App", config_manager: "ConfigManager"):
         self.app = app
         self.config_manager = config_manager
-
 
     async def on_load(self):
         pass
@@ -23,3 +28,6 @@ class Plugin:
 
     async def on_shutdown(self):
         pass
+
+    def __str__(self):
+        return self.title or self.name
