@@ -26,6 +26,7 @@ async def main():
     
     pm.register_all_from_package("plugins")
 
+    await pm.resolve_order()
     await pm.load_all()
     await pm.startup_all()
 
