@@ -16,7 +16,8 @@ async def main():
 
     app = App(
         bot_token=settings.bot_token,
-        bot_storage=MemoryStorage()
+        bot_storage=MemoryStorage(),
+        timezone=settings.timezone,
     )
 
     pm = PluginManager(
