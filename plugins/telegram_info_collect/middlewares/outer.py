@@ -56,7 +56,7 @@ class OuterMiddleware(BaseMiddleware):
                         user_tg_id=message.from_user.id,
                         chat_tg_id=message.chat.id,
                         status=tg_chat_member.status,
-                        title=getattr(tg_chat_member, "custom_title", "admin"),
+                        title=getattr(tg_chat_member, "custom_title", None),
                         role_id=1
                     )
 

@@ -123,7 +123,7 @@ class ChatMemberService:
         chat_tg_id: int,
         status: ChatMemberStatusEnum = ChatMemberStatusEnum.MEMBER,
         role_id: int = 1,
-        title: str = "admin",
+        title: Optional[str] = None,
     ) -> ChatMember:
         member = await self.get_by_user_and_chat_tg_ids(user_tg_id, chat_tg_id)
         if member:

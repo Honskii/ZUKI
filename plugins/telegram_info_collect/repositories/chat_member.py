@@ -106,7 +106,7 @@ class ChatMemberRepository:
         chat_id: int,
         status: ChatMemberStatusEnum = ChatMemberStatusEnum.MEMBER,
         role_id: int = 1,
-        title: str = "admin",
+        title: Optional[str] = None,
     ) -> None:
         member = ChatMember(
             user_id=user_id,
