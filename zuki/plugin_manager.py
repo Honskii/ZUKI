@@ -108,3 +108,11 @@ class PluginManager:
                 print(f"Failed to start plugin {plugin} ({name}): {e}")
                 raise e
         print("All plugins started")
+
+    async def bootstrap(self, package_list: List[str]):
+        for package_name in package_list:
+            self.register_all_from_package(package_name)
+
+        await self.resolve_order()
+        await self.load_all()
+        await self.startup_all()
