@@ -12,11 +12,11 @@ class PluginManager:
         self,
         *,
         app: App,
-        config_manager=Optional[ConfigManager]
+        config_manager: Optional[ConfigManager] = None
     ):
         self.app: App = app
         self.config_manager = config_manager
-        self.plugins: Dict[Plugin] = {}
+        self.plugins: Dict[str, Plugin] = {}
         self.order: List[str] = []
 
     def register(self, plugin_cls: Plugin):
@@ -98,7 +98,7 @@ class PluginManager:
 
     async def startup_all(self):
         print("Starting plugins...")
-        
+
         for name in self.order:
             plugin = self.app.plugins[name]
             try:

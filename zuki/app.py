@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router, BaseMiddleware
 from aiogram.fsm.storage.base import BaseStorage
 from zoneinfo import ZoneInfo
 
@@ -17,7 +17,7 @@ class App:
     ):
         self.bot = Bot(token=bot_token)
         if bot_storage is None:
-            self.dp = Dispatcher(storage=bot_storage)
+            self.dp = Dispatcher(storage=BaseStorage())
         else:
             self.dp = Dispatcher()
 
@@ -40,10 +40,8 @@ class App:
     def add_dispatcher_middleware(self, middleware):
         self.dp.update.middleware(middleware)
 
-    def add_router_middleware(self, router, middleware, *, update_type=None):
-        if update_type is None:
-            router.middleware(middleware)
-        else:
+    def add_router_middleware(self, router: Router, middleware: BaseMiddleware, update_types: List[str]):
+        for update_type in update_types:
             getattr(router, update_type).middleware(middleware)
 
     async def run(self):
