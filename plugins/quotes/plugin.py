@@ -26,7 +26,7 @@ class QuotesPlugin(Plugin):
         )
         self.app.register_service(f"{self.name}:quote_service", QuoteService)
 
-        self.app.add_router_middleware(router, QuoteMiddleware(quote_service), update_type="message")
+        self.app.add_router_middleware(router, QuoteMiddleware(quote_service), update_types=["message"])
         self.app.include_router(router)
 
     async def load_config(self, conf_file_path: str):
