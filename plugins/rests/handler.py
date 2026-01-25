@@ -208,23 +208,29 @@ async def remove_keyboard(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("🟡 Получить более продолжительный рест можно по уважительной причине, уточнив у администрации напрямую.")
 
 @router.message(F.text.regexp(r"(?i)^!выдать рест (\d+) (\d+)$"), F.chat.type.in_({"group", "supergroup"}))
-async def admin_give_rest_handler(message: Message, state: FSMContext, app_tz: tzinfo):
+async def admin_give_rest_handler(message: Message, state: FSMContext, uow_factory: UnitOfWork, app_tzinfo: tzinfo):
     if message.reply_to_message is None:
         await message.answer("❌ Команду необходимо использовать в ответ на сообщение пользователя, которому вы хотите выдать рест.")
         return
-    rest_chat_member_id = message.reply_to_message.from_user.id
+    rest_chat_member_tg_id = message.reply_to_message.from_user.id
+    rest_giver_tg_id = message.from_user.id
 
-    async with UnitOfWork() as uow:
+    async with uow_factory() as uow:
         chat_member_service = ChatMemberServiceFactory(uow.session).create()
-        chat_member = await chat_member_service.get_by_user_and_chat_tg_ids(
-            tg_user_id=rest_chat_member_id,
-            tg_chat_id=message.chat.id
+        rest_chat_member = await chat_member_service.get_by_user_and_chat_tg_ids(
+            user_tg_id=rest_chat_member_tg_id,
+            chat_tg_id=message.chat.id
         )
-        if chat_member is None:
+        rest_giver_chat_member = await chat_member_service.get_by_user_and_chat_tg_ids(
+            user_tg_id=rest_giver_tg_id,
+            chat_tg_id=message.chat.id
+        )
+        if rest_chat_member is None:
             await message.answer("❌ Пользователь не является участником этого чата.")
             return
-        chat_member_role = await chat_member_service.get_role(chat_member.id)
-        if chat_member_role.level < 6: # TODO: Создать разрешение на выдачу рестов и проверять через сервис
+
+        rest_giver_chat_member_role = await chat_member_service.get_role(rest_giver_chat_member.id)
+        if rest_giver_chat_member_role.level < 6: # TODO: Создать разрешение на выдачу рестов и проверять через сервис
             await message.answer("❌ У вас недостаточно прав для выдачи рестов.")
             return
 
@@ -239,37 +245,156 @@ async def admin_give_rest_handler(message: Message, state: FSMContext, app_tz: t
         await message.answer("❌ Продолжительность реста должна быть не менее 1 недели.")
         return
 
-    rest_start_date = datetime.now(tz=app_tz).date()
+    rest_start_date = datetime.now(tz=app_tzinfo).date()
     rest = await ChatMemberRestDomain.calculate_rest_dates(
         rest_starts_at=rest_start_date + timedelta(weeks=starts_from_week),
         duration_weeks=duration_weeks
     )
 
-    async with UnitOfWork() as uow:
+    async with uow_factory() as uow:
         rest_service = ChatMemberRestServiceFactory(uow.session).create()
 
-        await rest_service.put(
-            tg_user_id=message.from_user.id,
-            tg_chat_id=message.chat.id,
-            state="active",
-            starts_at=rest.starts_at,
-            ends_at=rest.ends_at,
-            revoked=False
-        )
-        await rest_service.put(
-            tg_user_id=message.from_user.id,
-            tg_chat_id=message.chat.id,
-            state="blocked",
-            starts_at=rest.starts_at + timedelta(weeks=duration_weeks),
-            ends_at=rest.ends_at + timedelta(weeks=duration_weeks),
-            revoked=False
-        )
+        for i in range(2):
+            await rest_service.put(
+                tg_user_id=rest_chat_member_tg_id,
+                tg_chat_id=message.chat.id,
+                state="blocked" if i else "active",
+                starts_at=rest.starts_at + timedelta(weeks=duration_weeks * i),
+                ends_at=rest.ends_at + timedelta(weeks=duration_weeks * i),
+                revoked=False
+            )
+        print("Issued rest to user", rest_chat_member_tg_id, "from", rest.starts_at, "to", rest.ends_at)
 
     await message.answer(
-        "✅ Рест успешно выдан пользователю с ID *{0}* с *{1}* по *{2}*.".format(
-            rest_chat_member_id,
+        "✅ Рест успешно выдан пользователю <b>{0}</b> с <b>{1}</b> по <b>{2}</b>.".format(
+            await get_user_link(message.chat.id, rest_chat_member_tg_id, message.bot),
             rest.starts_at.strftime("%d.%m.%Y"),
             rest.ends_at.strftime("%d.%m.%Y")
         ),
-        parse_mode="Markdown"
+        parse_mode="HTML",
+        disable_web_page_preview=True
     )
+
+@router.message(F.text.regexp(r"(?i)^рестлист( все| вся)$"), F.chat.type.in_({"group", "supergroup"}))
+async def rest_list_handler(message: Message, app_tzinfo: tzinfo, uow_factory: UnitOfWork):
+    """Обработчик команды !рестлист все|вся"""
+    match = re.match(r"(?i)^рестлист (все|вся)$", message.text)
+    if not match:
+        return
+
+    async with uow_factory() as uow:
+        rest_service = ChatMemberRestServiceFactory(uow.session).create()
+        chat_member_service = ChatMemberServiceFactory(uow.session).create()
+
+        rests = await rest_service.list(
+            chat_id=message.chat.id,
+            from_date=datetime.now(tz=app_tzinfo).date(),
+            states=["active"]
+        )
+
+        if not rests:
+            await message.answer("ℹ В этом чате нет оформленных рестов.")
+            return
+
+        response_lines = ["🗒️ <b>Список всех активных рестов в этом чате:</b>"]
+        for rest in rests:
+            chat_member = await chat_member_service.get(rest.chat_member_id)
+            user = await chat_member_service.get_user(chat_member)
+            if user is None:
+                print("WARNING: User not found for chat member ID", chat_member.id)
+                continue
+            chat = await chat_member_service.get_chat(chat_member)
+            if chat is None or chat.tg_id != message.chat.id:
+
+                continue
+            user_link = await get_user_link(
+                user_id=user.tg_id,
+                chat_id=chat.tg_id,
+                bot=message.bot
+            )
+            starts_at = rest.starts_at.astimezone(app_tzinfo).date()
+            ends_at = rest.ends_at.astimezone(app_tzinfo).date()
+            response_lines.append(
+                f"• {user_link} — с {starts_at.strftime('%d.%m.%Y')} по {ends_at.strftime('%d.%m.%Y')}"
+            )
+
+    await message.answer("\n".join(response_lines), parse_mode="HTML", disable_web_page_preview=True)
+
+@router.message(F.text.regexp(r"(?i)^рестлист( неделя| недели)?$"), F.chat.type.in_({"group", "supergroup"}))
+async def rest_list_week_handler(message: Message, app_tzinfo: tzinfo, uow_factory: UnitOfWork):
+    """Обработчик команды !рестлист неделя|недели"""
+    match = re.match(r"(?i)^рестлист( неделя|недели)?$", message.text)
+    if not match:
+        return
+
+    async with uow_factory() as uow:
+        rest_service = ChatMemberRestServiceFactory(uow.session).create()
+        chat_member_service = ChatMemberServiceFactory(uow.session).create()
+
+        rests = await rest_service.list(
+            chat_id=message.chat.id,
+            from_date=datetime.now(tz=app_tzinfo).date(),
+            to_date=(datetime.now(tz=app_tzinfo) + timedelta(weeks=1)).date(),
+            states=["active"]
+        )
+
+        if not rests:
+            await message.answer("ℹ В этом чате нет рестов на эту неделю.")
+            return
+
+        response_lines = ["🗒️ <b>Список рестов на эту неделю в этом чате:</b>"]
+        for rest in rests:
+            chat_member = await chat_member_service.get(rest.chat_member_id)
+            user = await chat_member_service.get_user(chat_member)
+            if user is None:
+                print("WARNING: User not found for chat member ID", chat_member.id)
+                continue
+            chat = await chat_member_service.get_chat(chat_member)
+            if chat is None or chat.tg_id != message.chat.id:
+                continue
+            user_link = await get_user_link(
+                user_id=user.tg_id,
+                chat_id=chat.tg_id,
+                bot=message.bot
+            )
+            response_lines.append(
+                f"• {user_link}"
+            )
+
+    await message.answer("\n".join(response_lines), parse_mode="HTML", disable_web_page_preview=True)
+
+@router.message(F.text.regexp(r"(?i)^(.)?(мои )?ресты$"), F.chat.type.in_({"group", "supergroup"}))
+async def my_rests_handler(message: Message, app_tzinfo: tzinfo, uow_factory: UnitOfWork):
+    """Обработчик команды мои ресты|ресты"""
+    match = re.match(r"(?i)^(.)?(мои )?ресты$", message.text)
+    if not match:
+        return
+
+    async with uow_factory() as uow:
+        rest_service = ChatMemberRestServiceFactory(uow.session).create()
+
+        rests = await rest_service.get_by_tg_ids(
+            tg_user_id=message.from_user.id,
+            tg_chat_id=message.chat.id,
+            from_date=datetime.now(tz=app_tzinfo).date(),
+            states=["active", "blocked"]
+        )
+
+        if not rests:
+            await message.answer("ℹ У вас нет оформленных рестов в этом чате.")
+            return
+
+        response_lines = ["🗒️ <b>Ваши активные ресты в этом чате:</b>"]
+        for rest in rests:
+            starts_at = rest.starts_at.astimezone(app_tzinfo).date()
+            ends_at = rest.ends_at.astimezone(app_tzinfo).date()
+            if rest.state.value == "active":
+                response_lines.append(
+                    f"• 🧉 Рест с {starts_at.strftime('%d.%m.%Y')} по {ends_at.strftime('%d.%m.%Y')}"
+                )
+            elif rest.state.value == "blocked":
+                response_lines.append(
+                    f"• 🔒 Заблокировано с {starts_at.strftime('%d.%m.%Y')} по {ends_at.strftime('%d.%m.%Y')}"
+                )
+
+    await message.answer("\n".join(response_lines), parse_mode="HTML", disable_web_page_preview=True)

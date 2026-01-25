@@ -39,8 +39,28 @@ class ChatMemberRestsService:
             to_date=to_date,
         )
 
-    async def list(self) -> List[ChatMemberRest]:
-        return await self.rests_repo.list()
+    async def list(
+        self,
+        chat_id: int,
+        states: List[str] = [],
+        from_date: Optional[date] = None,
+        to_date: Optional[date] = None,
+    ) -> List[ChatMemberRest]:
+        raw_result = await self.rests_repo.list()
+        result = []
+        for rest in raw_result:
+            chat_member = await self.chat_member_service.get(rest.chat_member_id)
+            chat = await self.chat_member_service.get_chat(chat_member)
+            if chat.tg_id != chat_id:
+                continue
+            if states and rest.state.value not in states:
+                continue
+            if from_date and rest.ends_at.date() < from_date:
+                continue
+            if to_date and rest.starts_at.date() > to_date:
+                continue
+            result.append(rest)
+        return result
 
     async def put(
         self,
