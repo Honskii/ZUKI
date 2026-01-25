@@ -35,7 +35,7 @@ async def sync_chat_admins_job(
                     chat_tg_id=chat_id,
                     status=admin.status,
                     title=getattr(admin, "custom_title", None),
-                    role_id=6
+                    role_id=5
                 )
                 continue
             await chat_member_service.put(

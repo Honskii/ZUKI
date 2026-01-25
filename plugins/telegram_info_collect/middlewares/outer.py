@@ -52,11 +52,17 @@ class OuterMiddleware(BaseMiddleware):
                         user_id=message.from_user.id
                     )
                     chat_member_service = ChatMemberServiceFactory(uow.session).create()
+
+                    role_id=None
+                    if tg_chat_member.status in ["creator"]:
+                        role_id=5
+
                     await chat_member_service.put(
                         user_tg_id=message.from_user.id,
                         chat_tg_id=message.chat.id,
                         status=tg_chat_member.status,
-                        title=getattr(tg_chat_member, "custom_title", None)
+                        title=getattr(tg_chat_member, "custom_title", None),
+                        role_id=role_id
                     )
 
         # Обработка сообщения
