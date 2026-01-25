@@ -49,7 +49,7 @@ class ChatAdminInfoCollectPlugin(Plugin):
         await sync_chat_admins_job(
             bot=self.app.bot,
             chat_id=int(self.chat_ids[self.iteration]),
-            uow_fabric=self.uow
+            uow_factory=self.uow
         )
         print(f"{datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}"
               f"Chat admins sync job done for chat_id={self.chat_ids[self.iteration]}")

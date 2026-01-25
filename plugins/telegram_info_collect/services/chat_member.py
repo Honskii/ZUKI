@@ -122,10 +122,17 @@ class ChatMemberService:
         user_tg_id: int,
         chat_tg_id: int,
         status: ChatMemberStatusEnum = ChatMemberStatusEnum.MEMBER,
-        role_id: int = 1,
+        role_id: Optional[int] = None,
         title: Optional[str] = None,
     ) -> ChatMember:
         member = await self.get_by_user_and_chat_tg_ids(user_tg_id, chat_tg_id)
+        if role_id is None:
+            role = await self.get_role(member.id)
+            if role is None:
+                role_id = 0
+            else:
+                role_id = role.id
+
         if member:
             member.status = status
             member.role_id = role_id
@@ -174,3 +181,11 @@ class ChatMemberService:
             return []
         all_permissions = await self.permission_service.list()
         return [perm for perm in all_permissions if role.level >= perm.level]
+
+    async def get_user(self, chat_member: ChatMember):
+        user = await self.user_service.get(chat_member.user_id)
+        return user
+
+    async def get_chat(self, chat_member: ChatMember):
+        chat = await self.chat_service.get(chat_member.chat_id)
+        return chat
