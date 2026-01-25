@@ -358,7 +358,7 @@ async def rest_list_week_handler(message: Message, app_tzinfo: tzinfo, uow_facto
                 bot=message.bot
             )
             response_lines.append(
-                f"• {user_link}"
+                f"• {user_link} — по {rest.ends_at.astimezone(app_tzinfo).date().strftime('%d.%m.%Y')}"
             )
 
     await message.answer("\n".join(response_lines), parse_mode="HTML", disable_web_page_preview=True)

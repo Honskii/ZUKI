@@ -1,5 +1,5 @@
 from typing import Callable, Awaitable, Dict, Any, Union
-from datetime import tzinfo
+from datetime import tzinfo, datetime
 
 from plugins.db_manager.uow import UnitOfWork
 
@@ -21,6 +21,9 @@ class RestMiddleware(BaseMiddleware):
         data["app_tzinfo"] = self.app_tzinfo
         data["uow_factory"] = self.uow_factory
 
+        if isinstance(message, Message):
+            if (datetime.now(tz=message.date.tzinfo) - message.date).seconds > 30:
+                return
         # Обработка сообщения
         result = await handler(message, data)
 
