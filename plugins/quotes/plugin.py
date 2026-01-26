@@ -8,7 +8,7 @@ from .middleware import QuoteMiddleware
 
 class QuotesPlugin(Plugin):
     name = "quotes"
-    requires = ["telegram_adapters"]
+    requires = ["telegram_adapters", "skip_updates"]
     default_config_dir = "default_configs"
 
     def __init__(self, *args, **kwargs):
@@ -26,7 +26,14 @@ class QuotesPlugin(Plugin):
         )
         self.app.register_service(f"{self.name}:quote_service", QuoteService)
 
-        self.app.add_router_middleware(router, QuoteMiddleware(quote_service), update_types=["message"])
+        self.app.add_router_middleware(
+            router,
+            QuoteMiddleware(
+                quote_service=quote_service,
+                message_skipper=self.app.get_service("skip_updates:messages_update_skipper")
+            ),
+            update_types=["message"]
+        )
         self.app.include_router(router)
 
     async def load_config(self, conf_file_path: str):

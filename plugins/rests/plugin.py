@@ -6,7 +6,7 @@ from .middlewares.middleware import RestMiddleware
 class RestsPlugin(Plugin):
     name = "rests"
     title = "Rest Plugin"
-    requires = ["db_manager", "telegram_info_collect"]
+    requires = ["db_manager", "telegram_info_collect", "skip_updates"]
 
     async def on_load(self):
         uow_factory = self.app.get_service("db_manager:uow_factory")
@@ -16,7 +16,8 @@ class RestsPlugin(Plugin):
             router,
             RestMiddleware(
                 uow_factory=uow_factory,
-                app_tzinfo=self.app.timezone
+                app_tzinfo=self.app.timezone,
+                message_skipper=self.app.get_service("skip_updates:messages_update_skipper")
             ),
             update_types=["message", "callback_query"]
         )

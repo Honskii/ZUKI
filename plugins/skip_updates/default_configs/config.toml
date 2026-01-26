@@ -1,0 +1,2 @@
+# Update types and seconds after which the update will be skipped
+message = 30
