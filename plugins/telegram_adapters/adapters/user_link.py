@@ -1,5 +1,4 @@
 from aiogram import Bot
-from aiogram.types import Message
 
 async def get_user_link(chat_id: int, user_id: int, bot: Bot) -> str:
     try:
@@ -7,9 +6,12 @@ async def get_user_link(chat_id: int, user_id: int, bot: Bot) -> str:
         name = chat_member.user.full_name
         username = chat_member.user.username
         if username:
-            return f"<a href='t.me/{username}'>{name}</a>"
+            return f"<a href='https://t.me/{username}'>{name}</a>"
         else:
-            return f"<a href='tg://openmessage?id={user_id}'>{name}</a>"
+            return f"<a href='`tg://openmessage?id={user_id}'>{name}</a>"
     except Exception as e:
         print("Error fetching chat member:", e)
-        return f"<a href='tg://openmessage?id={user_id}'>{user_id}</a>"
+        return f"<a href='`tg://openmessage?id={user_id}'>{user_id}</a>"
+
+async def get_user_link_with_notification(user_id: int, call_sign) -> str:
+    return f"<a href='tg://openmessage?id={user_id}'>{call_sign}</a>"
