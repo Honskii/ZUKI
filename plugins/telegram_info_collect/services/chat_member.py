@@ -127,11 +127,12 @@ class ChatMemberService:
     ) -> ChatMember:
         member = await self.get_by_user_and_chat_tg_ids(user_tg_id, chat_tg_id)
         if role_id is None:
-            role = await self.get_role(member.id)
-            if role is None:
-                role_id = 0
-            else:
-                role_id = role.id
+            if member:
+                role = await self.get_role(member.id)
+                if role is None:
+                    role_id = 0
+                else:
+                    role_id = role.id
 
         if member:
             member.status = status

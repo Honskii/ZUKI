@@ -17,7 +17,7 @@ class OuterMiddleware(BaseMiddleware):
         event: Update,
         data: dict,
     ) -> Any:
-        sessionmaker = data["db_manager:sessionmaker"]
+        uow_factory = data["db_manager:uow_factory"]
 
         if isinstance(event.event, Message):
             message: Message = event.event
@@ -25,7 +25,7 @@ class OuterMiddleware(BaseMiddleware):
             user = None
             chat = None
 
-            async with UnitOfWork(sessionmaker) as uow:
+            async with uow_factory() as uow:
                 user_service = UserServiceFactory(uow.session).create()
                 user = await user_service.put(
                     tg_id=message.from_user.id,
@@ -35,7 +35,7 @@ class OuterMiddleware(BaseMiddleware):
                     is_bot=message.from_user.is_bot
                 )
 
-            async with UnitOfWork(sessionmaker) as uow:
+            async with uow_factory() as uow:
                 chat_service = ChatServiceFactory(uow.session).create()
                 chat_type = TelegramChatMapper.to_internal_type(message.chat)
 
@@ -45,7 +45,7 @@ class OuterMiddleware(BaseMiddleware):
                     type=chat_type
                 )
 
-            async with UnitOfWork(sessionmaker) as uow:
+            async with uow_factory() as uow:
                 if user and chat:
                     tg_chat_member = await message.bot.get_chat_member(
                         chat_id=message.chat.id,
