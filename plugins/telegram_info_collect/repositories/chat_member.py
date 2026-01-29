@@ -88,10 +88,11 @@ class ChatMemberRepository:
         )
         return result.scalar_one_or_none()
 
-    async def list_by_chat(self, chat_id: int) -> List[ChatMember]:
-        result = await self.session.execute(
-            select(ChatMember).where(ChatMember.chat_id == chat_id)
-        )
+    async def list_by_chat(self, chat_id: int, statuses: List[str] = []) -> List[ChatMember]:
+        chat_members = select(ChatMember).where(ChatMember.chat_id == chat_id)
+        if statuses:
+            chat_members = chat_members.where(ChatMember.status.in_(statuses))
+        result = await self.session.execute(chat_members)
         return result.scalars().all()
 
     async def list_by_user(self, user_id: int) -> List[ChatMember]:

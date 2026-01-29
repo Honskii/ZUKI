@@ -35,15 +35,17 @@ class CallPluginChatMemberUnregRepository:
         )
         return result.scalars().all()
 
-    async def list_not_unreg_by_chat_ids(self, chat_ids: List[int]) -> List[CallPluginChatMemberUnregModel]:
+    async def list_not_unreg_by_chat_ids(self, chat_ids: List[int], statuses: List[str] = []) -> List[CallPluginChatMemberUnregModel]:
         """Получить всех неанрегнутых участников по списку ID чатов"""
         subquery = select(CallPluginChatMemberUnregModel.chat_member_id)
-        result = await self.session.execute(
-            select(ChatMember).where(
+        stmt = select(ChatMember).where(
                 ChatMember.chat_id.in_(chat_ids),
                 ChatMember.id.not_in(subquery)
             )
-        )
+
+        if statuses:
+            stmt = stmt.where(ChatMember.status.in_(statuses))
+        result = await self.session.execute(stmt)
         return result.scalars().all()
 
     async def add(self, chat_member_id: int) -> CallPluginChatMemberUnregModel:

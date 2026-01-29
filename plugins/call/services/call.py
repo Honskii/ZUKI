@@ -36,8 +36,8 @@ class CallPluginChatMemberUnregService:
     async def list_unreg_by_chat_ids(self, chat_ids: List[int]) -> List[CallPluginChatMemberUnregModel]:
         return await self.repo.list_unreg_by_chat_ids(chat_ids)
 
-    async def list_not_unreg_by_chat_ids(self, chat_ids: List[int]) -> List[CallPluginChatMemberUnregModel]:
-        return await self.repo.list_not_unreg_by_chat_ids(chat_ids)
+    async def list_not_unreg_by_chat_ids(self, chat_ids: List[int], statuses: List[str] = []) -> List[CallPluginChatMemberUnregModel]:
+        return await self.repo.list_not_unreg_by_chat_ids(chat_ids, statuses)
 
     async def remove(self, chat_member_id: int) -> None:
         obj = await self.get_by_chat_member_id(chat_member_id)

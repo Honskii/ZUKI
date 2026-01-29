@@ -109,9 +109,9 @@ class ChatMemberService:
             return None
         return await self.chat_member_repo.get_by_user_and_chat(user.id, chat.id)
 
-    async def list_by_chat_tg_id(self, chat_tg_id: int) -> List[ChatMember]:
+    async def list_by_chat_tg_id(self, chat_tg_id: int, statuses: List[str]) -> List[ChatMember]:
         chat = await self.chat_service.get_by_tg_id(chat_tg_id)
-        return await self.chat_member_repo.list_by_chat(chat.id)
+        return await self.chat_member_repo.list_by_chat(chat_id=chat.id, statuses=statuses)
 
     async def list_by_user_tg_id(self, user_tg_id: int) -> List[ChatMember]:
         user = await self.user_service.get_by_tg_id(user_tg_id)

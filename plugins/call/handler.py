@@ -73,7 +73,15 @@ async def call_handler(
         chat_member_service = ChatMemberServiceFactory(uow.session).create()
         unreg_service = CallPluginChatMemberUnregServiceFactory(uow.session).create()
 
-        chat_members = await unreg_service.list_not_unreg_by_chat_ids([chat.id])
+        chat_members = await unreg_service.list_not_unreg_by_chat_ids(
+            [chat.id],
+            statuses = [
+                "administrator",
+                "creator",
+                "member",
+                "restricted"
+            ]
+        )
 
         if not chat_members:
             return None
